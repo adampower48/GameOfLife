@@ -10,6 +10,7 @@ START_FILE = "start.txt"
 
 
 def my_hash(o):
+    # Used to hash states to keep track of seen states
     try:
         return hash(o)
     except TypeError:
@@ -25,6 +26,8 @@ def print_grid(grid):
 
 
 def read_start_state(filename=START_FILE):
+    # Reads seed state from given file
+    # "-" represent dead cells, anything else represents live cells
     grid = []
     with open(START_FILE) as f:
         for line in f.readlines():
@@ -35,6 +38,7 @@ def read_start_state(filename=START_FILE):
 
 
 def gen_random_state(density=0.5, height=cell_height, width=cell_width):
+    # Generates random seed state
     grid: list = rand(height, width).tolist()
 
     for i in range(len(grid)):
@@ -45,6 +49,8 @@ def gen_random_state(density=0.5, height=cell_height, width=cell_width):
 
 
 def calc_survive_toroidal(grid, i, j):
+    # Check cell neighbours to get next cell state
+    # Toroidal field
     # -1: Dead
     #  0: Same
     #  1: Live
@@ -68,6 +74,7 @@ def calc_survive_toroidal(grid, i, j):
 
 
 def calc_survive(grid, i, j):
+    # Check cell neighbours to get next cell state
     # -1: Dead
     #  0: Same
     #  1: Live
@@ -91,6 +98,9 @@ def calc_survive(grid, i, j):
 
 
 def advance(grid):
+    # Calculates next future state given current state
+    # Creates full new array representing new state
+
     changes = 0
     new_grid = [g[:] for g in grid]
 
@@ -111,6 +121,9 @@ def advance(grid):
 
 
 def advance_buffer_toroidal(grid):
+    # Calculates next future state given current state
+    # In-place using 3 buffer arrays
+    # Toroidal field
     changes = 0
 
     buffer_first = grid[0]
@@ -141,6 +154,7 @@ def advance_buffer_toroidal(grid):
         grid[i - 1] = buffer1
         buffer1 = buffer2
 
+    # Last line
     last_grid = [buffer_first, grid[-2], grid[-1]]
     buffer2 = []
     for j in range(len(grid[-1])):
@@ -161,6 +175,8 @@ def advance_buffer_toroidal(grid):
 
 
 def advance_buffer(grid):
+    # Calculates next future state given current state
+    # In-place using 2 buffer arrays
     changes = 0
 
     buffer1 = []
@@ -195,6 +211,7 @@ def advance_buffer(grid):
 
 
 def advance_by(grid, n):
+    # Advances by n generations
     changes = 0
     for _ in range(n):
         grid, c = advance(grid)
@@ -212,7 +229,7 @@ def run_complete(grid):
     changes = 1
 
     while changes:
-        grid, changes = advance(grid)
+        grid, changes = advance_buffer_toroidal(grid)
         state = my_hash(grid)
         if state in states:
             break
@@ -231,25 +248,4 @@ def run_complete(grid):
 if __name__ == '__main__':
     grid = read_start_state()
     # grid = gen_random_state()
-    # grid = run_complete(grid)
-
-    states = {my_hash(grid): True}
-    print_grid(grid)
-
-    changes = 0
-    steps = 0
-    while True:
-        grid, ch = advance_buffer_toroidal(grid)
-        state = my_hash(grid)
-        if state in states:
-            break
-        else:
-            states[state] = True
-
-        changes += ch
-        steps += 1
-
-        print(ch)
-        print_grid(grid)
-
-    print("Steps: {}, Changes: {}".format(steps, changes))
+    grid = run_complete(grid)
