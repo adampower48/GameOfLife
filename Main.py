@@ -1,12 +1,45 @@
 # Implementation of
 # https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 
-
-from numpy.random import rand
+from numpy.random import rand, random
 
 cell_width = 20
 cell_height = 20
 START_FILE = "start.txt"
+DEFAULT_RULES = {
+    0: -1,
+    1: -1,
+    2: 0,
+    3: 1,
+    4: -1,
+    5: -1,
+    6: -1,
+    7: -1,
+    8: -1,
+    9: -1,
+}
+
+MOORES_NEIGHBOURHOOD = (
+    (-1, -1),
+    (-1, 0),
+    (-1, 1),
+    (0, -1),
+    (0, 1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+)
+
+VON_NEUMANN_NEIGHBOURHOOD = (
+    (-2, 0),
+    (-1, 0),
+    (1, 0),
+    (2, 0),
+    (0, -2),
+    (0, -1),
+    (0, 1),
+    (0, 2),
+)
 
 
 def my_hash(o):
@@ -73,28 +106,39 @@ def calc_survive_toroidal(grid, i, j):
     return 0
 
 
-def calc_survive(grid, i, j):
+def calc_survive(grid, i, j, mutation_prob=0, rules=DEFAULT_RULES, neighbourhood=VON_NEUMANN_NEIGHBOURHOOD):
     # Check cell neighbours to get next cell state
+    # Toroidal field
+    # Mutation by adding/subtracting num of neighbours at random
+    # Optional ruleset, neighbourhood
     # -1: Dead
     #  0: Same
     #  1: Live
 
+    # Counting
     num_living = 0
+    for offset in neighbourhood:
+        adj_i = (i + offset[0]) % len(grid)  # Wrapping at edges
+        adj_j = (j + offset[1]) % len(grid[0])  #
 
-    for yOff in range(-1, 2):
-        for xOff in range(-1, 2):
-            adj_i = i + yOff
-            adj_j = j + xOff
+        # Valid index
+        if 0 <= adj_i < len(grid) and 0 <= adj_j < len(grid[0]):
+            num_living += grid[adj_i][adj_j]
 
-            # Valid index & not middle cell
-            if 0 <= adj_i < len(grid) and 0 <= adj_j < len(grid[0]) and not (adj_i == i and adj_j == j):
-                num_living += grid[adj_i][adj_j]
+    # Random stuff
+    num_change = 0
+    while random() < mutation_prob:
+        num_change += 1
 
-    if num_living < 2 or num_living > 3:
-        return -1
-    if num_living == 3:
-        return 1
-    return 0
+    if random() < 0.5:
+        num_change *= -1
+
+    num_living += num_change
+    num_living = max(0, min(9, num_living))
+    # End random stuff
+
+    # Rules
+    return rules[num_living]
 
 
 def advance(grid):
@@ -124,13 +168,14 @@ def advance_buffer_toroidal(grid):
     # Calculates next future state given current state
     # In-place using 3 buffer arrays
     # Toroidal field
-    changes = 0
+    survival_func = calc_survive
 
+    changes = 0
     buffer_first = grid[0]
 
     buffer1 = []
     for j in range(len(grid[0])):
-        survive = calc_survive_toroidal(grid, 0, j)
+        survive = survival_func(grid, 0, j)
         if survive == 0:
             buffer1.append(grid[0][j])
         else:
@@ -142,7 +187,7 @@ def advance_buffer_toroidal(grid):
     for i in range(1, len(grid) - 1):
         buffer2 = []
         for j in range(len(grid[i])):
-            survive = calc_survive_toroidal(grid, i, j)
+            survive = survival_func(grid, i, j)
             if survive == 0:
                 buffer2.append(grid[i][j])
             else:
@@ -158,7 +203,7 @@ def advance_buffer_toroidal(grid):
     last_grid = [buffer_first, grid[-2], grid[-1]]
     buffer2 = []
     for j in range(len(grid[-1])):
-        survive = calc_survive_toroidal(last_grid, 2, j)
+        survive = survival_func(last_grid, 2, j)
 
         if survive == 0:
             buffer2.append(last_grid[2][j])
@@ -246,6 +291,6 @@ def run_complete(grid):
 
 
 if __name__ == '__main__':
-    grid = read_start_state()
-    # grid = gen_random_state()
+    # grid = read_start_state()
+    grid = gen_random_state()
     grid = run_complete(grid)
