@@ -1,6 +1,8 @@
 # Implementation of
 # https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 from numpy.random import rand, random
 
 cell_width = 20
@@ -17,6 +19,19 @@ DEFAULT_RULES = {
     7: -1,
     8: -1,
     9: -1,
+}
+
+ODD_EVEN_RULES = {
+    0: -1,
+    1: 1,
+    2: -1,
+    3: 1,
+    4: -1,
+    5: 1,
+    6: -1,
+    7: 1,
+    8: -1,
+    9: 1,
 }
 
 MOORES_NEIGHBOURHOOD = (
@@ -40,6 +55,13 @@ VON_NEUMANN_NEIGHBOURHOOD = (
     (0, 1),
     (0, 2),
 )
+
+
+def save_to_bitmap(grid, filename=None):
+    if not filename:
+        filename = "grid.png"
+
+    plt.imsave(filename, grid, cmap=cm.gray.reversed())
 
 
 def my_hash(o):
@@ -106,7 +128,7 @@ def calc_survive_toroidal(grid, i, j):
     return 0
 
 
-def calc_survive(grid, i, j, mutation_prob=0, rules=DEFAULT_RULES, neighbourhood=VON_NEUMANN_NEIGHBOURHOOD):
+def calc_survive(grid, i, j, mutation_prob=0, rules=DEFAULT_RULES, neighbourhood=MOORES_NEIGHBOURHOOD):
     # Check cell neighbours to get next cell state
     # Toroidal field
     # Mutation by adding/subtracting num of neighbours at random
@@ -284,6 +306,7 @@ def run_complete(grid):
         steps += 1
         total_changes += changes
         print_grid(grid)
+        save_to_bitmap(grid)
 
     print("Steps: {}, Changes: {}".format(steps, total_changes))
 
@@ -291,6 +314,6 @@ def run_complete(grid):
 
 
 if __name__ == '__main__':
-    # grid = read_start_state()
-    grid = gen_random_state()
+    grid = read_start_state()
+    # grid = gen_random_state()
     grid = run_complete(grid)
