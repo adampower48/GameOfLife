@@ -7,7 +7,7 @@ from numpy.random import rand, random
 
 cell_width = 20
 cell_height = 20
-START_FILE = "start.txt"
+START_FILE = "start_2d.txt"
 DEFAULT_RULES = {
     0: -1,
     1: -1,
@@ -306,7 +306,6 @@ def run_complete(grid):
         steps += 1
         total_changes += changes
         print_grid(grid)
-        save_to_bitmap(grid)
 
     print("Steps: {}, Changes: {}".format(steps, total_changes))
 
