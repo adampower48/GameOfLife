@@ -1,79 +1,14 @@
 from numpy.random import rand
 
 from Main import my_hash
+from Enums import Rules1D, Neighbourhoods1D
 
 START_FILE = "start_1d.txt"
-DEFAULT_WIDTH = 100
-
-# Todo: Move these to Enum
-# Neighbourhoods
-DEFAULT_NEIGHBOURHOOD = (
-    -1,
-    1
-)
-
-LEFT_NEIGHOURHOOD = (
-    -2, -1
-)
-
-RANGE_2_NEIGHBOURHOOD = (
-    -2, -1,
-    1, 2
-)
-
-RANGE_2M_NEIGHBOURHOOD = (
-    -2, -1,
-    0, 1, 2
-)
-
-RANGE_5M_NEIGHBOURHOOD = (
-    -5, -4, -3, -2, -1,
-    0, 1, 2, 3, 4, 5
-)
-
-# Rulesets
-DEFAULT_RULES = {
-    0: -1,
-    1: 1,
-    2: -1,
-}
-
-ABACUS_RULES = {
-    0: 1,
-    1: 0,
-    2: -1,
-    3: 1,
-    4: -1,
-    5: -1
-}
-
-CLASS_4A_RULES = {
-    0: -1,
-    1: 0,
-    2: 1,
-    3: 1,
-    4: 1,
-    5: -1
-}
-
-DATE_PALM_RULES = {
-    0: 1,
-    1: -1,
-    2: -1,
-    3: -1,
-    4: -1,
-    5: -1,
-    6: -1,
-    7: 0,
-    8: 0,
-    9: 0,
-    10: 0,
-    11: 0,
-}
+DEFAULT_WIDTH = 1000
 
 
 def print_state(state):
-    print(*[chr(1) if c else "-" for c in state], sep="")
+    print(*[chr(1132) if c else "-" for c in state], sep="")
 
 
 def read_start_state(filename=START_FILE):
@@ -91,7 +26,7 @@ def gen_random_state(width=DEFAULT_WIDTH, density=0.1):
     return state
 
 
-def calc_survive(state, i, mutation_prob=0, rules=DEFAULT_RULES, neighbourhood=DEFAULT_NEIGHBOURHOOD):
+def calc_survive(state, i, mutation_prob=0, rules=Rules1D.DEFAULT, neighbourhood=Neighbourhoods1D.DEFAULT):
     num_living = 0
 
     # Counting
@@ -109,7 +44,8 @@ def advance(state):
     new_state = state[:]
 
     for i in range(len(state)):
-        survive = calc_survive(state, i, rules=DATE_PALM_RULES, neighbourhood=RANGE_5M_NEIGHBOURHOOD)
+        survive = calc_survive(state, i, rules=Rules1D.ROOTS, neighbourhood=Neighbourhoods1D.ROOTS)
+        # survive = calc_survive(state, i)
 
         if survive == -1:
             new_state[i] = 0
