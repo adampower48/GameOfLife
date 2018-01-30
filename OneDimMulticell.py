@@ -5,6 +5,7 @@ from Enums import Rules1D, Neighbourhoods1D
 from Main import my_hash
 
 DEFAULT_WIDTH = 100
+START_FILE = "start_multi.txt"
 
 
 class Cell:
@@ -16,8 +17,11 @@ class Cell:
         self.rules = Rules1D.DEFAULT
         self.alive = False
 
-        for k, v in kwargs:
+        for k, v in kwargs.items():
             setattr(self, k, v)
+
+    def type_of(self):
+        return self.neighbourhood, self.rules
 
     def __eq__(self, other):
         return self.neighbourhood == other.neighbourhood and self.rules == other.rules and self.alive == other.alive
@@ -42,12 +46,54 @@ class CellFar3(Cell):
         self.neighbourhood = (-3, 3)
 
 
+class CellLeft(Cell):
+    def __init__(self):
+        super().__init__()
+        self.display_chr = "X"
+        self.debug_chr = "4"
+        self.neighbourhood = (-3, -2, -1)
+        self.rules = {
+            0: -1,
+            1: 0,
+            2: 1,
+            3: -1
+        }
+
+
+class CellAbacus(Cell):
+    def __init__(self):
+        super().__init__()
+        self.display_chr = "O"
+        self.debug_chr = "5"
+        self.neighbourhood = Neighbourhoods1D.ABACUS
+        self.rules = Rules1D.ABACUS
+
+
+possible_types = (Cell, CellFar2, CellFar3, CellLeft, CellAbacus)
+possible_types_inst = tuple(map(lambda c: c(), possible_types))
+possible_weights = (1, 0, 0, 0, 0)
+
+
+def read_start_state(filename=START_FILE):
+    state = []
+
+    with open(filename) as f:
+        line = f.readline()[:-1]
+
+        for c in line:
+            if c == "-":
+                state.append(Cell())
+            else:
+                for cell_type in possible_types_inst:
+                    if cell_type.debug_chr == c:
+                        state.append(type(cell_type)())
+                        state[-1].alive = True
+
+        return state
+
+
 def gen_random_state(width=DEFAULT_WIDTH, density=0.5):
     # Generates single state with randomised cells
-
-    possible_types = (Cell, CellFar2, CellFar3)
-    possible_weights = (1, 1, 1)
-
     state = [c() for c in choices(possible_types, weights=possible_weights, k=width)]
     for c in state:
         c.alive = random() < density
@@ -84,9 +130,12 @@ def calc_survive(state, i):
             else:
                 neighbour_counts[type(state[adj])] = 1
 
+    # Class of new cell, weighted per number of cells
     max_count = max(neighbour_counts.values())
-    # Class of new cell
     max_type = choice([t for t in neighbour_counts if neighbour_counts[t] == max_count])
+
+    # Class of new cell, no weights
+    # max_type = choice(tuple(neighbour_counts.keys()))
 
     return rules[num_living], max_type
 
@@ -143,5 +192,6 @@ def run_complete(state):
 
 
 if __name__ == '__main__':
-    state = gen_random_state()
+    # state = gen_random_state()
+    state = read_start_state()
     state = run_complete(state)
