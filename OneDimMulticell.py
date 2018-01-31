@@ -4,8 +4,9 @@ from random import choice, random, choices
 from Enums import Rules1D, Neighbourhoods1D
 from Main import my_hash
 
-DEFAULT_WIDTH = 100
+DEFAULT_WIDTH = 300
 START_FILE = "start_multi.txt"
+CSV_FILE = "out_multi.txt"
 
 # Cell attributes
 CELL_TYPES = {
@@ -51,7 +52,7 @@ def build_cell(attr_tuple):
 # Constructors for Cell types
 possible_types = tuple(build_cell(CELL_TYPES[t]) for t in CELL_TYPES)
 possible_types_inst = tuple(map(lambda c: c(), possible_types))
-possible_weights = (1, 1, 1, 1, 1)
+possible_weights = (1, 0, 0, 0, 1)
 
 
 def read_start_state(filename=START_FILE):
@@ -86,6 +87,11 @@ def print_state(state, debug=False):
         print(*[c.debug_chr if c.alive else "-" for c in state], sep="")
     else:
         print(*[c.display_chr if c.alive else " " for c in state], sep="")
+
+
+def write_to_csv(state, clear=False):
+    with open(CSV_FILE, "w" if clear else "a") as f:
+        f.writelines(",".join([c.debug_chr if c.alive else "-" for c in state]) + "\n")
 
 
 def calc_survive(state, i):
@@ -149,7 +155,8 @@ def run_complete(state):
     # Generates future states until repeated state is found
 
     state_hashes = {my_hash(state): True}
-    print_state(state)
+    print_state(state, True)
+    write_to_csv(state, True)
 
     steps = 0
     total_changes = 0
@@ -165,7 +172,8 @@ def run_complete(state):
 
         steps += 1
         total_changes += changes
-        print_state(state)
+        print_state(state, True)
+        write_to_csv(state)
 
     print("Steps: {}, Changes: {}".format(steps, total_changes))
 
