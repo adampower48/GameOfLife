@@ -1,10 +1,12 @@
 from copy import copy
 from random import choice, random, choices
 
-from Enums import Rules1D, Neighbourhoods1D
-from Main import my_hash
+import Enums
+from Enums import Rules1D, Neighbourhoods1D, Rulesets
+from Helpers import my_hash
 
-DEFAULT_WIDTH = 300
+DEFAULT_WIDTH = 100
+CSV_CHUNK_SIZE = 25
 START_FILE = "start_multi.txt"
 CSV_FILE = "out_multi.txt"
 
@@ -15,7 +17,10 @@ CELL_TYPES = {
     "Far2": (chr(1132), "2", (-2, 2), Rules1D.DEFAULT),
     "Far3": (chr(1421), "3", (-3, 3), Rules1D.DEFAULT),
     "Left3": ("X", "4", (-3, -2, -1), {0: -1, 1: 0, 2: 1, 3: -1}),
-    "Abacus": ("O", "5", Neighbourhoods1D.ABACUS, Rules1D.ABACUS)
+    "Abacus": ("O", "5", Neighbourhoods1D.ABACUS, Rules1D.ABACUS),
+    "Class4A": ("A", "6", Neighbourhoods1D.CLASS_4A, Rules1D.CLASS_4A),
+    "DatePalm": ("P", "7", Neighbourhoods1D.DATE_PALM, Rules1D.DATE_PALM),
+    "Roots": ("R", "8", *Enums.from_ruleset(Rulesets.ROOTS))
 }
 
 
@@ -31,8 +36,10 @@ class Cell:
         for k, v in kwargs.items():
             setattr(self, k, v)
 
+        self.type = hash((self.neighbourhood, tuple(self.rules.items())))
+
     def type_of(self):
-        return hash((self.neighbourhood, tuple(self.rules.items())))
+        return self.type
 
     def __eq__(self, other):
         return self.neighbourhood == other.neighbourhood and self.rules == other.rules and self.alive == other.alive
@@ -52,7 +59,7 @@ def build_cell(attr_tuple):
 # Constructors for Cell types
 possible_types = tuple(build_cell(CELL_TYPES[t]) for t in CELL_TYPES)
 possible_types_inst = tuple(map(lambda c: c(), possible_types))
-possible_weights = (1, 0, 0, 0, 1)
+possible_weights = (1, 1, 1, 1, 1, 1, 1, 1)
 
 
 def read_start_state(filename=START_FILE):
@@ -89,9 +96,9 @@ def print_state(state, debug=False):
         print(*[c.display_chr if c.alive else " " for c in state], sep="")
 
 
-def write_to_csv(state, clear=False):
+def write_to_csv(states, clear=False):
     with open(CSV_FILE, "w" if clear else "a") as f:
-        f.writelines(",".join([c.debug_chr if c.alive else "-" for c in state]) + "\n")
+        f.writelines([",".join([c.debug_chr if c.alive else "-" for c in state]) + "\n" for state in states])
 
 
 def calc_survive(state, i):
@@ -156,24 +163,30 @@ def run_complete(state):
 
     state_hashes = {my_hash(state): True}
     print_state(state, True)
-    write_to_csv(state, True)
+    write_to_csv([state], True)
 
     steps = 0
     total_changes = 0
 
+    state_buffer = []
     while True:
         state, changes = advance(state)
+        state_buffer.append(state)
+
         state_hash = my_hash(state)
         if state_hash in state_hashes:
+            write_to_csv(state_buffer)
             break
-            # pass
         else:
             state_hashes[state_hash] = True
 
         steps += 1
         total_changes += changes
+
         print_state(state, True)
-        write_to_csv(state)
+        if steps % CSV_CHUNK_SIZE == 0:
+            write_to_csv(state_buffer)
+            state_buffer = []
 
     print("Steps: {}, Changes: {}".format(steps, total_changes))
 
