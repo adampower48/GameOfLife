@@ -5,7 +5,7 @@ import Enums
 from Enums import Rules1D, Neighbourhoods1D, Rulesets
 from Helpers import my_hash
 
-DEFAULT_WIDTH = 100
+DEFAULT_WIDTH = 75
 CSV_CHUNK_SIZE = 25
 START_FILE = "start_multi.txt"
 CSV_FILE = "out_multi.txt"
@@ -37,9 +37,6 @@ class Cell:
             setattr(self, k, v)
 
         self.type = hash((self.neighbourhood, tuple(self.rules.items())))
-
-    def type_of(self):
-        return self.type
 
     def __eq__(self, other):
         return self.neighbourhood == other.neighbourhood and self.rules == other.rules and self.alive == other.alive
@@ -108,25 +105,27 @@ def calc_survive(state, i):
     rules = state[i].rules
 
     num_living = 0
-    neighbour_counts = {state[i].type_of(): 0}
+    neighbour_counts = {state[i].type: 0}
 
     # Counting
+    len_state = len(state)
     for offset in neighbourhood:
-        adj = (i + offset) % len(state)
+        adj = (i + offset) % len_state
 
         if state[adj].alive:
             num_living += 1
 
             # Neighbour types
-            if state[adj].type_of() in neighbour_counts:
-                neighbour_counts[state[adj].type_of()] += 1
+            cell_type = state[adj].type
+            if cell_type in neighbour_counts:
+                neighbour_counts[cell_type] += 1
             else:
-                neighbour_counts[state[adj].type_of()] = 1
+                neighbour_counts[cell_type] = 1
 
     # Class of new cell, highest number priority
     max_count = max(neighbour_counts.values())
     max_type = choice([t for t in neighbour_counts if neighbour_counts[t] == max_count])
-    max_type = next(c for i, c in enumerate(possible_types) if possible_types_inst[i].type_of() == max_type)
+    max_type = next(c for i, c in enumerate(possible_types) if possible_types_inst[i].type == max_type)
 
     # Class of new cell, no weights
     # max_type = choice(tuple(neighbour_counts.keys()))
@@ -193,7 +192,22 @@ def run_complete(state):
     return state
 
 
+def prof():
+    # Profile entire program
+    import cProfile
+
+    s = gen_random_state(7500)
+
+    pr = cProfile.Profile()
+    pr.enable()
+    advance(s)
+    pr.disable()
+    pr.print_stats(sort="tottime")
+
+
 if __name__ == '__main__':
     state = gen_random_state()
     # state = read_start_state()
     state = run_complete(state)
+
+    # prof()
