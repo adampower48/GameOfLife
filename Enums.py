@@ -88,6 +88,23 @@ class Rules1D:
     }
 
 
+class Neighbourhoods2D:
+    DEFAULT = ((-1, 0),
+               (1, 0),
+               (0, -1),
+               (0, 1))
+
+
+class Rules2D:
+    DEFAULT = {
+        0: -1,
+        1: 0,
+        2: 1,
+        3: 1,
+        4: -1
+    }
+
+
 class Rulesets:
     TULIPS = "R10,C0,M1,S0,S3,S6,S10,S11,S14,S15,S16,S17,S18,S19,S20,S21,B1,B11,B12,B17,B18,B19,B20,B21"
     THE_CITY = "R3,C0,M0,S0,S3,B0,B4"
