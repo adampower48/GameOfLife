@@ -133,6 +133,37 @@ def calc_survive(state, i):
     return rules[num_living], max_type
 
 
+def calc_survive2(state, i):
+    # Calculates future state of 1 cell
+    # This was an attempted optimisation of calc_survive
+    # Results:
+    #   calc_survive : 124000 cells per second
+    #   calc_survive2:  73000 cells per second
+    # Listed optimisations can be found here:
+    # https://pastebin.com/tXiKVEfX
+
+    neighbourhood = state[i].neighbourhood
+    rules = state[i].rules
+
+    num_living = 0
+    neighbour_counts = {c.type: 0 for c in possible_types_inst}
+
+    # Counting
+    for adj_cell in map(lambda offset: state[(i + offset) % DEFAULT_WIDTH], neighbourhood):
+        num_living += adj_cell.alive
+        neighbour_counts[adj_cell.type] += adj_cell.alive
+
+    # Class of new cell, highest number priority
+    max_count = max(neighbour_counts.values())
+    max_type = choice([t for t in neighbour_counts if neighbour_counts[t] == max_count])
+    max_type = next(c for i, c in enumerate(possible_types) if possible_types_inst[i].type == max_type)
+
+    # Class of new cell, no weights
+    # max_type = choice(tuple(neighbour_counts.keys()))
+
+    return rules[num_living], max_type
+
+
 def advance(state):
     # Calculates next future state
     changes = 0
