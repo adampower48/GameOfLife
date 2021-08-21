@@ -1,0 +1,7 @@
+name: cellular_automata
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+
